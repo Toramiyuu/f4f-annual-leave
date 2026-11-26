@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Annual Leave Portal - First 4 Figures</title>
+<style>
+  :root {
+    --navy: #15324F; --blue: #2463A5; --blue-soft: #E8F0FA; --bg: #F4F6F8; --card: #FFFFFF;
+    --text: #1F2933; --muted: #616E7C; --line: #E4E7EB;
+    --green: #0F7B55; --green-soft: #DCF5E8; --amber: #A15C07; --amber-soft: #FDF1D8;
+    --red: #B42318; --red-soft: #FDE7E5; --grey-soft: #EEF1F4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", sans-serif; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  .top { background: var(--navy); color: #fff; }
+  .top-inner { max-width: 960px; margin: 0 auto; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .brand-title { font-size: 18px; font-weight: 700; letter-spacing: .2px; }
+  .brand-sub { font-size: 12px; opacity: .75; }
+  .who { font-size: 13px; opacity: .9; text-align: right; }
+  .who b { font-weight: 600; }
+  .who a, .who button.linklike { color: #cfe0f5; font-size: 12px; }
+  .linklike { background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; font: inherit; }
+  .signout-confirm { display: inline-block; margin-top: 4px; background: rgba(255,255,255,.12); border-radius: 6px; padding: 4px 8px; font-size: 12px; }
+  .signout-confirm a { color: #fff; font-weight: 700; }
+  .check { display: flex; gap: 8px; align-items: flex-start; font-weight: 500; font-size: 14px; color: var(--text); }
+  .check input { margin-top: 3px; }
+  .tabs { background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  .tabs-inner { max-width: 960px; margin: 0 auto; padding: 0 10px; display: flex; gap: 2px; overflow-x: auto; }
+  .tab { appearance: none; border: 0; background: none; padding: 13px 12px 11px; border-bottom: 3px solid transparent; color: var(--muted); font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .tab:hover { color: var(--text); }
+  .tab[aria-selected="true"] { color: var(--navy); border-bottom-color: var(--blue); }
+  .count { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 6px; border-radius: 10px; background: var(--amber-soft); color: var(--amber); font-size: 12px; line-height: 20px; text-align: center; }
+  main { max-width: 960px; margin: 0 auto; padding: 18px 14px 60px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  .loading { padding: 60px 0; text-align: center; color: var(--muted); }
+
+  /* Balance */
+  .hero-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+  .big { font-size: 44px; font-weight: 750; line-height: 1.05; color: var(--navy); font-variant-numeric: tabular-nums; }
+  .big span { font-size: 16px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+  .avail { background: var(--blue-soft); color: var(--navy); border-radius: 10px; padding: 8px 12px; font-size: 14px; }
+  .avail b { font-size: 20px; margin-left: 4px; font-variant-numeric: tabular-nums; }
+  .meter { display: flex; height: 10px; border-radius: 6px; overflow: hidden; background: var(--grey-soft); margin: 16px 0 12px; }
+  .meter i { display: block; height: 100%; }
+  .meter .m-approved { background: var(--navy); }
+  .meter .m-pending { background: repeating-linear-gradient(45deg, #E3A008, #E3A008 4px, #F5C451 4px, #F5C451 8px); }
+  .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 0; }
+  .stats div { background: var(--bg); border-radius: 8px; padding: 8px 10px; }
+  .stats dt { font-size: 12px; color: var(--muted); }
+  .stats dd { margin: 0; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .key { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
+  .notice { border-radius: 10px; padding: 12px 14px; margin: 10px 0 0; font-size: 14px; }
+  .notice.info { background: var(--blue-soft); color: var(--navy); }
+  .notice.warn { background: var(--amber-soft); color: #6B3E04; }
+  .notice.error { background: var(--red-soft); color: #7A1A12; }
+  .notice.ok { background: var(--green-soft); color: #0B5A3F; }
+  .notice ul { margin: 4px 0 0 18px; padding: 0; }
+
+  /* Form */
+  form { display: grid; gap: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  label { display: grid; gap: 5px; font-size: 13px; font-weight: 600; color: #3E4C59; }
+  input[type=date], input[type=number], input[type=text], textarea, select { width: 100%; border: 1px solid #CBD2D9; border-radius: 8px; padding: 9px 10px; background: #fff; font-weight: 400; }
+  textarea { resize: vertical; min-height: 64px; }
+  input:focus, textarea:focus, select:focus, button:focus-visible { outline: 3px solid rgba(36, 99, 165, .25); border-color: var(--blue); }
+  .hint { font-size: 13px; color: var(--muted); align-self: end; padding-bottom: 9px; }
+  .btn { appearance: none; border: 1px solid #CBD2D9; background: #fff; border-radius: 8px; padding: 9px 14px; font-weight: 600; cursor: pointer; }
+  .btn:hover { background: var(--bg); }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn.primary:hover { background: #1D5590; }
+  .btn.approve { background: var(--green); border-color: var(--green); color: #fff; }
+  .btn.approve:hover { background: #0B6646; }
+  .btn.reject { color: var(--red); border-color: #F1B5AF; }
+  .btn.danger { background: var(--red); border-color: var(--red); color: #fff; }
+  .btn.small { padding: 5px 10px; font-size: 13px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* Lists */
+  .req { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .req:first-of-type { border-top: 0; padding-top: 2px; }
+  .req-dates { font-weight: 650; }
+  .req-meta { font-size: 13px; color: var(--muted); }
+  .req-note { font-size: 13px; margin-top: 3px; }
+  .req-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+  .pill { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; }
+  .pill.Pending { background: var(--amber-soft); color: var(--amber); }
+  .pill.Approved { background: var(--green-soft); color: var(--green); }
+  .pill.Rejected { background: var(--red-soft); color: var(--red); }
+  .pill.Cancelled { background: var(--grey-soft); color: var(--muted); }
+  .confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; font-size: 13px; }
+  .empty { color: var(--muted); padding: 8px 0; }
+
+  .appr-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+  .appr-name { font-size: 17px; font-weight: 700; }
+  .appr-dates { font-size: 15px; margin: 6px 0; }
+  .appr-reason { background: var(--bg); border-radius: 8px; padding: 8px 10px; font-size: 14px; margin: 8px 0; white-space: pre-wrap; }
+  .appr-bal { font-size: 14px; margin: 6px 0 12px; }
+  .neg { color: var(--red); font-weight: 700; }
+  .appr-form { display: grid; grid-template-columns: 130px 1fr auto; gap: 10px; align-items: end; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 700; padding: 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filters label { flex: 1 1 180px; }
+
+  .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(20px); background: var(--navy); color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; max-width: 92vw; z-index: 20; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--red); }
+
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .stats div:last-child { grid-column: span 2; }
+    .grid2 { grid-template-columns: 1fr; }
+    .hint { padding-bottom: 0; }
+    .big { font-size: 38px; }
+    .req { flex-direction: column; }
+    .req-side { flex-direction: row; align-items: center; justify-content: space-between; }
+    .appr-form { grid-template-columns: 1fr; }
+    .who { text-align: left; }
+    .hide-sm { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div>
+      <div class="brand-title">Annual Leave</div>
+      <div class="brand-sub">First 4 Figures</div>
+    </div>
+    <div class="who" id="who"></div>
+  </div>
+</header>
+<nav class="tabs" id="tabs" hidden><div class="tabs-inner" id="tabsInner" role="tablist"></div></nav>
+<main id="app"><div class="loading">Loading your leave...</div></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var state = { me: null, mgr: null, tab: null, initialTab: null, filter: { status: '', staff: '' }, daysTouched: false,
+    token: '', codeEmail: '', codeSent: false };
+  var TOKEN_KEY = 'f4f_leave_token';
+  function getToken() {
+    try { return window.localStorage.getItem(TOKEN_KEY) || state.token || ''; } catch (e) { return state.token || ''; }
+  }
+  function setToken(t) {
+    state.token = t || '';
+    try { if (t) window.localStorage.setItem(TOKEN_KEY, t); else window.localStorage.removeItem(TOKEN_KEY); } catch (e) { /* storage blocked */ }
+  }
+  var app = document.getElementById('app');
+
+  // ---------- server calls ----------
+  // API_URL is filled in when this page is published as a normal web page
+  // (dev-tests/build-site.js). Then it talks to the leave system directly and
+  // never depends on which Google accounts the browser is signed in to.
+  var API_URL = "https://script.google.com/macros/s/AKfycbzHXwNEKWFktfcEzjsjfm2HAo4zZ6-Zfgcn6kZuEmySvy15S0r3UDXfn5j1cmlxP7_3/exec";
+  var IN_GOOGLE = !API_URL && !!(window.google && google.script && google.script.run);
+  var RETRY_READS = { api_getMyData: 2, api_getManagerData: 2 };
+
+  function call(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    if (!IN_GOOGLE) return post(fn, args, RETRY_READS[fn] || 0);
+    return new Promise(function (resolve, reject) {
+      var runner = google.script.run.withSuccessHandler(resolve).withFailureHandler(function (err) {
+        reject(err && err.message ? err : new Error(String(err)));
+      });
+      runner[fn].apply(runner, args);
+    });
+  }
+
+  function post(fn, args, retries) {
+    return fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn: fn, args: args }),
+      credentials: 'omit',
+      redirect: 'follow',
+      cache: 'no-store'
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).catch(function () {
+      if (retries > 0) return new Promise(function (res) { setTimeout(res, 800); }).then(function () { return post(fn, args, retries - 1); });
+      throw new Error('Could not reach the leave system. Please check your internet connection and try again.');
+    });
+  }
+
+  // ---------- helpers ----------
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fmt(n) { return n === null || n === undefined || n === '' ? '-' : String(Math.round(Number(n) * 100) / 100); }
+  function dayWord(n) { return fmt(n) + (Number(n) === 1 ? ' day' : ' days'); }
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function pretty(iso) { if (!iso) return ''; var p = iso.split('-'); return Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + p[0]; }
+  function range(a, b) { return a === b ? pretty(a) : pretty(a) + ' - ' + pretty(b); }
+  function utc(iso) { var p = iso.split('-'); return Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2])); }
+  function calDays(a, b) { return Math.round((utc(b) - utc(a)) / 86400000) + 1; }
+  function weekdays(a, b) {
+    var n = 0;
+    for (var t = utc(a), end = utc(b); t <= end; t += 86400000) { var d = new Date(t).getUTCDay(); if (d !== 0 && d !== 6) n++; }
+    return n;
+  }
+  function validIso(s) { return /^\d{4}-\d{2}-\d{2}$/.test(String(s || '')); }
+  function isStep(n, step) { var q = n / step; return Math.abs(q - Math.round(q)) < 1e-9; }
+  function sourceLabel(src) {
+    if (!src) return '';
+    if (src === 'Form') return 'via Google Form';
+    if (src === 'Portal') return 'via Portal';
+    return 'added by ' + src;
+  }
+  function signOutUrl() {
+    var back = (state.me && state.me.portalUrl) || '';
+    return 'https://accounts.google.com/Logout' + (back ? '?continue=' + encodeURIComponent(back) : '');
+  }
+  function signOutLink() {
+    return '<span id="signoutWrap"><button class="linklike" data-action="ask-signout">Not you? Sign out</button></span>';
+  }
+  function pill(status) { return '<span class="pill ' + esc(status) + '">' + esc(status) + '</span>'; }
+  function notice(kind, html) { return '<div class="notice ' + kind + '">' + html + '</div>'; }
+  function list(items) { return '<ul>' + items.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; }
+
+  var toastTimer = null;
+  function toast(msg, kind) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show' + (kind === 'error' ? ' error' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.className = 'toast'; }, 4200);
+  }
+
+  // ---------- loading ----------
+  function start() {
+    if (!IN_GOOGLE) {
+      var m = /[?&]tab=([a-z]+)/.exec(window.location.search);
+      state.initialTab = m ? m[1] : null;
+      loadAll();
+      return;
+    }
+    try {
+      google.script.url.getLocation(function (loc) {
+        state.initialTab = loc && loc.parameter && loc.parameter.tab ? String(loc.parameter.tab) : null;
+        loadAll();
+      });
+    } catch (e) { loadAll(); }
+  }
+
+  function loadAll() {
+    return call('api_getMyData', getToken()).then(function (me) {
+      if (!me || !me.ok) { fatal(me && me.error ? me.error : 'The Leave Portal could not load.'); return; }
+      state.me = me;
+      if (me.authMode === 'none' && getToken()) setToken('');   // code sign-in expired
+      if (!me.isManager) { state.mgr = null; return; }
+      return call('api_getManagerData', getToken()).then(function (mgr) {
+        if (mgr && mgr.ok) state.mgr = mgr; else { state.mgr = null; toast((mgr && mgr.error) || 'Could not load approvals.', 'error'); }
+      });
+    }).then(function () {
+      if (!state.me) return;
+      pickTab();
+      render();
+    }).catch(function (err) { fatal(err.message); });
+  }
+  window.portalReload = loadAll;
+
+  function fatal(msg) {
+    document.getElementById('tabs').hidden = true;
+    app.innerHTML = '<div class="card">' + notice('error', '<b>Something went wrong.</b><br>' + esc(msg)) +
+      '<p class="small muted">Try reloading the page. If it keeps happening, send a screenshot of this message to ' +
+      esc((state.me && state.me.managerName) || 'Kanako') + '.</p></div>';
+  }
+
+  function tabsAllowed() {
+    var t = [];
+    if (state.me.staff) t.push({ id: 'mine', label: 'My leave' });
+    if (state.me.isManager && state.mgr) {
+      t.push({ id: 'approvals', label: 'Approvals', count: state.mgr.pending.length });
+      t.push({ id: 'add', label: 'Add leave' });
+      t.push({ id: 'team', label: 'Team balances' });
+      t.push({ id: 'all', label: 'All requests' });
+    }
+    return t;
+  }
+
+  function pickTab() {
+    var ids = tabsAllowed().map(function (t) { return t.id; });
+    if (state.tab && ids.indexOf(state.tab) >= 0) return;
+    if (state.initialTab && ids.indexOf(state.initialTab) >= 0) state.tab = state.initialTab;
+    else state.tab = ids[0] || null;
+  }
+
+  // ---------- rendering ----------
+  function render() {
+    var me = state.me;
+    document.getElementById('who').innerHTML = me.signedInAs ?
+      'Signed in as <b>' + esc(me.signedInAs) + '</b>' + (me.staff ? ' (' + esc(me.staff.name) + ')' : '') + '<br>' +
+      (me.authMode === 'code' ? '<button class="linklike" data-action="code-signout">Sign out</button>' : signOutLink()) : '';
+
+    var tabs = tabsAllowed();
+    var nav = document.getElementById('tabs');
+    if (tabs.length > 1) {
+      nav.hidden = false;
+      document.getElementById('tabsInner').innerHTML = tabs.map(function (t) {
+        return '<button class="tab" role="tab" data-tab="' + t.id + '" aria-selected="' + (t.id === state.tab) + '">' +
+          esc(t.label) + (t.count ? '<span class="count">' + t.count + '</span>' : '') + '</button>';
+      }).join('');
+    } else {
+      nav.hidden = true;
+    }
+
+    if (!state.tab) { app.innerHTML = renderNotStaff(); if (!state.me.signedInAs) wireSignIn(); addMovedBanner(); return; }
+    if (state.tab === 'mine') app.innerHTML = renderMine();
+    else if (state.tab === 'approvals') app.innerHTML = renderApprovals();
+    else if (state.tab === 'team') app.innerHTML = renderTeam();
+    else if (state.tab === 'all') app.innerHTML = renderAll();
+    else if (state.tab === 'add') app.innerHTML = renderAdd();
+    if (state.tab === 'mine') wireForm();
+    if (state.tab === 'add') wireAddForm();
+    addMovedBanner();
+  }
+
+  function addMovedBanner() {
+    var url = state.me && state.me.webPortalUrl;
+    if (!IN_GOOGLE || !url) return;
+    app.insertAdjacentHTML('afterbegin', '<div class="notice info" style="margin:0 0 14px">The Leave Portal has a new address that works in every browser: ' +
+      '<a href="' + esc(url) + '" target="_blank"><b>' + esc(url) + '</b></a>. Please use and bookmark it from now on.</div>');
+  }
+
+  function renderSignIn() {
+    var html = '<section class="card" id="signinCard"><h2>Sign in</h2>' + (IN_GOOGLE ?
+      '<p class="small muted" style="margin-top:-4px">Company staff: open this page while signed in to your <b>@first4figures.com</b> Google account and you are signed in automatically.</p>' +
+      '<p>No company Google account? Sign in with a code sent to your email.</p>' :
+      '<p>Enter your work email address (or the email the company has for you). We will email you a 6-digit code.</p>' +
+      '<p class="small muted" style="margin-top:-6px">You stay signed in on this device for 30 days.</p>');
+    if (!state.codeSent) {
+      html += '<form id="codeReqForm" novalidate><label>Your email address<input type="text" id="cEmail" inputmode="email" autocomplete="email" value="' +
+        esc(state.codeEmail) + '"></label><div id="codeMsg"></div><div class="actions"><button type="submit" class="btn primary" id="cSend">Send me a code</button></div></form>';
+    } else {
+      html += notice('info', 'If <b>' + esc(state.codeEmail) + '</b> is on the staff list, a 6-digit code is on its way. Check your email (and spam).') +
+        '<form id="codeVerifyForm" novalidate style="margin-top:12px"><label>6-digit code<input type="text" id="cCode" inputmode="numeric" autocomplete="one-time-code" maxlength="7"></label>' +
+        '<div id="codeMsg"></div><div class="actions"><button type="submit" class="btn primary" id="cVerify">Sign in</button>' +
+        '<button type="button" class="btn" data-action="code-restart">Use a different email / send a new code</button></div></form>';
+    }
+    return html + '</section>';
+  }
+
+  function wireSignIn() {
+    var req = document.getElementById('codeReqForm');
+    if (req) req.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var email = document.getElementById('cEmail').value.trim();
+      var msg = document.getElementById('codeMsg');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg.innerHTML = notice('error', 'Please enter a valid email address.'); return; }
+      var btn = document.getElementById('cSend'); btn.disabled = true; btn.textContent = 'Sending...';
+      call('api_requestCode', email).then(function (res) {
+        if (!res.ok) { btn.disabled = false; btn.textContent = 'Send me a code'; msg.innerHTML = notice('error', esc(res.error)); return; }
+        state.codeEmail = email; state.codeSent = true; render();
+        var c = document.getElementById('cCode'); if (c) c.focus();
+      }).catch(function (err) { btn.disabled = false; btn.textContent = 'Send me a code'; msg.innerHTML = notice('error', esc(err.message)); });
+    });
+    var ver = document.getElementById('codeVerifyForm');
+    if (ver) ver.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var code = document.getElementById('cCode').value.replace(/\D/g, '');
+      var msg = document.getElementById('codeMsg');
+      if (code.length !== 6) { msg.innerHTML = notice('error', 'The code has 6 digits.'); return; }
+      var btn = document.getElementById('cVerify'); btn.disabled = true; btn.textContent = 'Checking...';
+      call('api_verifyCode', state.codeEmail, code).then(function (res) {
+        if (!res.ok) { btn.disabled = false; btn.textContent = 'Sign in'; msg.innerHTML = notice('error', esc(res.error)); return; }
+        setToken(res.token); state.codeSent = false; state.tab = null;
+        return loadAll();
+      }).catch(function (err) { btn.disabled = false; btn.textContent = 'Sign in'; msg.innerHTML = notice('error', esc(err.message)); });
+    });
+  }
+
+  function renderNotStaff() {
+    var me = state.me;
+    if (!me.signedInAs) return renderSignIn();
+    return '<div class="card"><h2>This account is not on the staff list</h2>' +
+      notice('warn', 'You are signed in as <b>' + esc(me.signedInAs) + '</b>, which is not listed in the staff list.') +
+      '<p>If you have more than one Google account, open this link in a <b>private / incognito window</b> and sign in with ' +
+      'your company account only, or switch account in the top-right corner of Google.</p>' +
+      (me.authMode === 'code' ? '<p><button class="btn" data-action="code-signout">Sign out</button></p>' :
+      '<p><a class="btn" href="' + esc(signOutUrl()) + '" target="_top">Sign out and use my company account</a></p>') +
+      '<p class="muted small">If this is your company account, ask ' + esc(me.managerName) + ' to add it to the staff list.</p></div>';
+  }
+
+  function renderBalanceCard(b, next) {
+    var me = state.me;
+    if (!b.entitlementSet) {
+      return '<section class="card"><div class="eyebrow">Annual Leave ' + b.year + '</div>' +
+        notice('warn', 'Your ' + b.year + ' Annual Leave entitlement has not been entered yet, so you cannot request leave for ' +
+        b.year + ' yet. Please ask ' + esc(me.managerName) + ' to add it.') +
+        (b.approved || b.pending ? '<p class="small muted">Approved so far: ' + dayWord(b.approved) + ' - waiting: ' + dayWord(b.pending) + '</p>' : '') +
+        '</section>';
+    }
+    var total = Math.max(b.total, 0.0001);
+    var ap = Math.min(100, Math.max(0, b.approved / total * 100));
+    var pe = Math.min(100 - ap, Math.max(0, b.pending / total * 100));
+    var html = '<section class="card" id="balanceCard">' +
+      '<div class="hero-top"><div><div class="eyebrow">Annual Leave ' + b.year + '</div>' +
+      '<div class="big' + (b.remaining < 0 ? ' neg' : '') + '" id="remaining">' + fmt(b.remaining) + '<span>' + (Number(b.remaining) === 1 ? 'day' : 'days') + ' left</span></div></div>' +
+      '<div class="avail">Available to request<b id="available">' + fmt(b.available) + '</b></div></div>' +
+      '<div class="meter" aria-hidden="true"><i class="m-approved" style="width:' + ap + '%"></i><i class="m-pending" style="width:' + pe + '%"></i></div>' +
+      '<dl class="stats">' +
+      '<div><dt>Entitlement</dt><dd>' + fmt(b.entitlement) + '</dd></div>' +
+      '<div><dt>Carry-over</dt><dd>' + fmt(b.carryover) + '</dd></div>' +
+      '<div><dt>Total</dt><dd>' + fmt(b.total) + '</dd></div>' +
+      '<div><dt><span class="key" style="background:var(--navy)"></span>Approved</dt><dd id="approved">' + fmt(b.approved) + '</dd></div>' +
+      '<div><dt><span class="key" style="background:#E3A008"></span>Waiting</dt><dd id="pending">' + fmt(b.pending) + '</dd></div>' +
+      '</dl>';
+    if (next && (next.approved || next.pending)) {
+      html += '<p class="small muted" style="margin:12px 0 0">' + next.year + ': ' + dayWord(next.approved) + ' approved, ' +
+        dayWord(next.pending) + ' waiting. These count against your ' + next.year + ' entitlement.</p>';
+    }
+    return html + '</section>';
+  }
+
+  function renderMine() {
+    var me = state.me;
+    var b = me.balance;
+    var r = me.rules;
+    var canRequest = true;
+    var html = renderBalanceCard(b, me.nextYearBalance);
+    html += '<section class="card"><h2>Request leave</h2>' +
+      '<form id="reqForm" novalidate>' +
+      '<div class="grid2"><label>Start date<input type="date" id="fStart" min="' + r.minDate + '" max="' + r.maxDate + '" required></label>' +
+      '<label>End date<input type="date" id="fEnd" min="' + r.minDate + '" max="' + r.maxDate + '" required></label></div>' +
+      '<div class="grid2"><label>Days of leave<input type="number" id="fDays" min="' + r.dayStep + '" step="' + r.dayStep + '" inputmode="decimal" required></label>' +
+      '<div class="hint" id="dayHint">Choose your dates. Weekdays are counted for you; change the number for half days or public holidays.</div></div>' +
+      '<label>Reason / comments (optional)<textarea id="fReason" maxlength="1000" rows="2"></textarea></label>' +
+      '<div id="formMsg"></div>' +
+      '<div class="actions"><button type="submit" class="btn primary" id="fSubmit"' + (canRequest ? '' : ' disabled') + '>Send to ' +
+      esc(me.managerName) + ' for approval</button></div>' +
+      '</form>' +
+      (me.formUrl ? '<p class="small muted" style="margin:12px 0 0">You can also use the <a href="' + esc(me.formUrl) + '">Google Form</a>. Both go to the same place.</p>' : '') +
+      '</section>';
+
+    html += '<section class="card"><h2>My requests</h2>' + (me.requests.length ? me.requests.map(renderMyRequest).join('') :
+      '<div class="empty">No requests yet.</div>') + '</section>';
+    return html;
+  }
+
+  function renderMyRequest(q) {
+    var side = pill(q.status);
+    if (q.status === 'Pending') {
+      side += '<span data-cancel-wrap="' + esc(q.id) + '"><button class="btn small" data-action="ask-cancel" data-id="' + esc(q.id) + '">Cancel request</button></span>';
+    }
+    var days = q.status === 'Approved' && q.approvedDays !== q.days ?
+      dayWord(q.approvedDays) + ' approved (asked ' + fmt(q.days) + ')' : dayWord(q.days);
+    return '<div class="req" data-request="' + esc(q.id) + '"><div><div class="req-dates">' + esc(q.range) + '</div>' +
+      '<div class="req-meta">' + esc(q.id || 'Added by ' + state.me.managerName) + ' - ' + esc(days) + (q.source ? ' - ' + esc(sourceLabel(q.source)) : '') + '</div>' +
+      (q.reason ? '<div class="req-note">' + esc(q.reason) + '</div>' : '') +
+      (q.note ? '<div class="req-note muted">' + esc(q.note) + '</div>' : '') +
+      '</div><div class="req-side">' + side + '</div></div>';
+  }
+
+  function renderApprovals() {
+    var m = state.mgr;
+    if (!m.pending.length) {
+      return '<div class="card"><h2>Approvals</h2><div class="empty">Nothing is waiting for approval.</div></div>';
+    }
+    return m.pending.map(function (q) {
+      var b = q.balance;
+      var bal;
+      if (!b.isCurrentYear) bal = '<span class="muted">' + b.year + ' leave: the ' + b.year + ' entitlement is not entered yet, so the balance is not checked. ' +
+        'Already approved for ' + b.year + ': ' + dayWord(b.approved) + '.</span>';
+      else if (!b.entitlementSet) bal = '<span class="neg">No ' + b.year + ' entitlement entered for this person.</span>';
+      else bal = b.year + ': <b>' + dayWord(b.remaining) + '</b> remaining now &rarr; <b class="' + (q.remainingAfter < 0 ? 'neg' : '') + '">' +
+        dayWord(q.remainingAfter) + '</b> after approving (total ' + fmt(b.total) + ', approved ' + fmt(b.approved) + ')';
+      return '<section class="card" data-approval="' + esc(q.id) + '">' +
+        '<div class="appr-head"><div class="appr-name">' + esc(q.name) + ' <span class="muted small">No. ' + esc(q.no) + '</span></div>' +
+        '<div class="small muted">' + esc(q.id) + ' - ' + esc(sourceLabel(q.source) || 'typed into the sheet') +
+        (q.submittedAt ? ' - ' + esc(q.submittedAt) : '') + '</div></div>' +
+        '<div class="appr-dates">' + esc(q.range) + ' - <b>' + esc(dayWord(q.days)) + '</b></div>' +
+        (q.reason ? '<div class="appr-reason">' + esc(q.reason) + '</div>' : '') +
+        '<div class="appr-bal">' + bal + '</div>' +
+        '<div class="appr-form"><label>Days to approve<input type="number" data-days-for="' + esc(q.id) + '" value="' + esc(fmt(q.days)) +
+        '" min="' + state.me.rules.dayStep + '" max="' + esc(q.days) + '" step="' + state.me.rules.dayStep + '"></label>' +
+        '<label>Note to ' + esc(q.name) + ' (optional)<input type="text" data-note-for="' + esc(q.id) + '" maxlength="1000"></label>' +
+        '<div class="actions" data-decide-wrap="' + esc(q.id) + '">' +
+        '<button class="btn approve" data-action="ask-decide" data-decision="Approved" data-id="' + esc(q.id) + '">Approve</button>' +
+        '<button class="btn reject" data-action="ask-decide" data-decision="Rejected" data-id="' + esc(q.id) + '">Reject</button></div></div>' +
+        '</section>';
+    }).join('');
+  }
+
+  function renderTeam() {
+    var m = state.mgr;
+    var rows = m.balances.map(function (s) {
+      var b = s.balance;
+      if (!b.entitlementSet) {
+        return '<tr><td>' + esc(s.no) + '</td><td>' + esc(s.name) + '<div class="small muted hide-sm">' + esc(s.email || 'no email') + '</div></td>' +
+          '<td colspan="4" class="muted">Entitlement not entered</td><td class="num">' + fmt(b.approved) + '</td><td class="num">' + fmt(b.pending) + '</td></tr>';
+      }
+      return '<tr><td>' + esc(s.no) + '</td><td>' + esc(s.name) + '<div class="small muted hide-sm">' + esc(s.email || 'no email') + '</div></td>' +
+        '<td class="num">' + fmt(b.entitlement) + '</td><td class="num">' + fmt(b.carryover) + '</td><td class="num">' + fmt(b.total) + '</td>' +
+        '<td class="num"><b class="' + (b.remaining < 0 ? 'neg' : '') + '">' + fmt(b.remaining) + '</b></td>' +
+        '<td class="num">' + fmt(b.approved) + '</td><td class="num">' + fmt(b.pending) + '</td></tr>';
+    }).join('');
+    return '<section class="card"><h2>Team balances - ' + m.leaveYear + '</h2>' +
+      '<div class="table-wrap"><table><thead><tr><th>No.</th><th>Name</th><th class="num">Entitlement</th><th class="num">Carry-over</th>' +
+      '<th class="num">Total</th><th class="num">Remaining</th><th class="num">Approved</th><th class="num">Waiting</th></tr></thead>' +
+      '<tbody>' + (rows || '<tr><td colspan="8" class="muted">No staff found.</td></tr>') + '</tbody></table></div>' +
+      '<p class="small muted" style="margin:12px 0 0">Same numbers as the Admin_Dashboard tab. The leave year is set in Admin_Dashboard!B3' +
+      (m.spreadsheetUrl ? ' - <a href="' + esc(m.spreadsheetUrl) + '" target="_blank">open the spreadsheet</a>' : '') + '.</p></section>';
+  }
+
+  function renderAll() {
+    var m = state.mgr;
+    var f = state.filter;
+    var names = {};
+    m.requests.forEach(function (q) { names[q.no] = q.name; });
+    var staffOpts = Object.keys(names).sort(function (a, b) { return names[a] < names[b] ? -1 : 1; })
+      .map(function (no) { return '<option value="' + esc(no) + '"' + (f.staff === no ? ' selected' : '') + '>' + esc(names[no]) + '</option>'; }).join('');
+    var statusOpts = ['Pending', 'Approved', 'Rejected', 'Cancelled']
+      .map(function (s) { return '<option' + (f.status === s ? ' selected' : '') + '>' + s + '</option>'; }).join('');
+    var rows = m.requests.filter(function (q) {
+      return (!f.status || q.status === f.status) && (!f.staff || q.no === f.staff);
+    }).map(function (q) {
+      var canCancel = q.status === 'Pending' || q.status === 'Approved';
+      return '<tr data-row="' + esc(q.id) + '"><td class="small">' + esc(q.id || '-') + '</td><td>' + esc(q.name) + '</td><td>' + esc(q.range) + '</td>' +
+        '<td class="num">' + fmt(q.days) + '</td><td class="num">' + (q.status === 'Approved' ? fmt(q.approvedDays) : '') + '</td><td>' + pill(q.status) + '</td>' +
+        '<td class="small">' + esc(q.note || q.reason || '') + '</td>' +
+        '<td><span data-mcancel-wrap="' + esc(q.id) + '">' + (canCancel && q.id ? '<button class="btn small" data-action="ask-mcancel" data-id="' + esc(q.id) + '">Cancel</button>' : '') + '</span></td></tr>';
+    }).join('');
+    return '<section class="card"><h2>All requests</h2>' +
+      '<div class="filters"><label>Status<select id="fltStatus"><option value="">All</option>' + statusOpts + '</select></label>' +
+      '<label>Staff<select id="fltStaff"><option value="">Everyone</option>' + staffOpts + '</select></label></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Dates</th><th class="num">Days</th><th class="num">Approved</th>' +
+      '<th>Status</th><th>Note</th><th></th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="8" class="muted">No requests match.</td></tr>') + '</tbody></table></div></section>';
+  }
+
+  // ---------- Kanako: add leave for a staff member ----------
+  function renderAdd() {
+    var m = state.mgr;
+    var r = state.me.rules;
+    var opts = m.balances.slice().sort(function (a, b) { return a.name < b.name ? -1 : 1; }).map(function (s) {
+      var b = s.balance;
+      var avail = b.entitlementSet ? fmt(b.available) + ' available' : 'entitlement not entered';
+      return '<option value="' + esc(s.no) + '">' + esc(s.name) + ' - ' + esc(avail) + '</option>';
+    }).join('');
+    return '<section class="card"><h2>Add leave for a staff member</h2>' +
+      '<p class="small muted" style="margin-top:-4px">For staff who cannot use the portal or the Google Form (for example no company Google account). ' +
+      'The same balance checks apply, and they are emailed at the address in Staff_Master.</p>' +
+      '<form id="addForm" novalidate>' +
+      '<label>Staff member<select id="aStaff"><option value="">Choose...</option>' + opts + '</select></label>' +
+      '<div class="grid2"><label>Start date<input type="date" id="aStart" min="' + r.minDate + '" max="' + r.maxDate + '"></label>' +
+      '<label>End date<input type="date" id="aEnd" min="' + r.minDate + '" max="' + r.maxDate + '"></label></div>' +
+      '<div class="grid2"><label>Days of leave<input type="number" id="aDays" min="' + r.dayStep + '" step="' + r.dayStep + '" inputmode="decimal"></label>' +
+      '<div class="hint" id="aHint">Weekdays are counted for you; change it for half days or public holidays.</div></div>' +
+      '<label>Reason / note (optional, shown to the staff member)<textarea id="aReason" maxlength="1000" rows="2"></textarea></label>' +
+      '<label class="check"><input type="checkbox" id="aApprove" checked> Approve straight away (untick to leave it waiting in Approvals)</label>' +
+      '<div id="addMsg"></div>' +
+      '<div class="actions"><button type="submit" class="btn primary" id="aSubmit">Add leave</button></div>' +
+      '</form></section>';
+  }
+
+  function wireAddForm() {
+    var form = document.getElementById('addForm');
+    if (!form) return;
+    var touched = false;
+    var s = document.getElementById('aStart');
+    var e = document.getElementById('aEnd');
+    var d = document.getElementById('aDays');
+    function recount() {
+      var hint = document.getElementById('aHint');
+      if (!validIso(s.value) || !validIso(e.value) || e.value < s.value) { hint.textContent = 'Choose the dates.'; return; }
+      var w = weekdays(s.value, e.value);
+      if (!touched) d.value = w;
+      hint.textContent = dayWord(w) + ' Mon-Fri between these dates.';
+    }
+    s.addEventListener('change', function () { if (!e.value || e.value < s.value) e.value = s.value; recount(); });
+    e.addEventListener('change', recount);
+    d.addEventListener('input', function () { touched = true; });
+    form.addEventListener('submit', function (ev) { ev.preventDefault(); submitAdd(); });
+  }
+
+  function submitAdd() {
+    var staffNo = document.getElementById('aStaff').value;
+    var v = {
+      start: document.getElementById('aStart').value,
+      end: document.getElementById('aEnd').value,
+      days: document.getElementById('aDays').value,
+      reason: document.getElementById('aReason').value
+    };
+    var approve = document.getElementById('aApprove').checked;
+    var msg = document.getElementById('addMsg');
+    var errs = [];
+    if (!staffNo) errs.push('Choose a staff member.');
+    if (!validIso(v.start) || !validIso(v.end)) errs.push('Choose the start and end dates.');
+    else if (v.end < v.start) errs.push('The end date is before the start date.');
+    if (String(v.days).trim() === '' || !(Number(v.days) > 0)) errs.push('Enter the number of days.');
+    if (errs.length) { msg.innerHTML = notice('error', '<b>Please check:</b>' + list(errs)); return; }
+    var btn = document.getElementById('aSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    call('api_addForStaff', staffNo, v, approve, getToken()).then(function (res) {
+      if (!res.ok) {
+        btn.disabled = false;
+        btn.textContent = 'Add leave';
+        msg.innerHTML = notice('error', '<b>Not added:</b>' + list(res.errors && res.errors.length ? res.errors : [res.error || 'Could not add the leave.']));
+        return;
+      }
+      state.mgr = res.manager;
+      state.me = res.data;
+      render();
+      var who = res.request.name;
+      document.getElementById('addMsg').innerHTML = notice('ok', esc(res.id + ' added for ' + who + ' (' + res.request.range + ', ' +
+        dayWord(res.request.days) + ') as ' + res.request.status + '. ' + who + ' has been emailed.'));
+      toast(res.id + ' added for ' + who);
+    }).catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = 'Add leave';
+      msg.innerHTML = notice('error', esc(err.message));
+    });
+  }
+
+  // ---------- request form ----------
+  function wireForm() {
+    var form = document.getElementById('reqForm');
+    if (!form) return;
+    state.daysTouched = false;
+    var s = document.getElementById('fStart');
+    var e = document.getElementById('fEnd');
+    var d = document.getElementById('fDays');
+    s.addEventListener('change', function () { if (!e.value || e.value < s.value) e.value = s.value; updateDays(); });
+    e.addEventListener('change', updateDays);
+    d.addEventListener('input', function () { state.daysTouched = true; });
+    form.addEventListener('submit', function (ev) { ev.preventDefault(); submitRequest(); });
+  }
+
+  function updateDays() {
+    var s = document.getElementById('fStart').value;
+    var e = document.getElementById('fEnd').value;
+    var hint = document.getElementById('dayHint');
+    if (!validIso(s) || !validIso(e) || e < s) { hint.textContent = 'Choose your dates.'; return; }
+    var w = weekdays(s, e);
+    if (!state.daysTouched) document.getElementById('fDays').value = w;
+    hint.textContent = w === 0 ? 'Those dates are a weekend.' :
+      dayWord(w) + ' Mon-Fri between these dates. Change it for half days or public holidays.';
+  }
+
+  function clientErrors(v) {
+    var me = state.me;
+    var r = me.rules;
+    var errs = [];
+    if (!validIso(v.start)) errs.push('Choose a start date.');
+    if (!validIso(v.end)) errs.push('Choose an end date.');
+    if (validIso(v.start) && validIso(v.end)) {
+      if (v.end < v.start) errs.push('The end date is before the start date.');
+      else if (v.start.slice(0, 4) !== v.end.slice(0, 4)) errs.push('A request cannot run into a new year. Send one request up to 31 Dec and another from 1 Jan.');
+      else if (v.start < r.minDate || v.end > r.maxDate) errs.push('Requests must be between ' + pretty(r.minDate) + ' and ' + pretty(r.maxDate) + '.');
+    }
+    var n = Number(String(v.days).replace(',', '.'));
+    if (String(v.days).trim() === '' || !isFinite(n)) errs.push('Enter the number of days.');
+    else if (n <= 0) errs.push('The number of days must be more than 0.');
+    else if (!isStep(n, r.dayStep)) errs.push('Days must be in steps of ' + r.dayStep + ' (e.g. 1, 1.5, 2).');
+    else if (validIso(v.start) && validIso(v.end) && v.end >= v.start && n > calDays(v.start, v.end)) errs.push('That is more days than the dates you chose.');
+    else if (validIso(v.start) && Number(v.start.slice(0, 4)) === me.leaveYear && me.balance.entitlementSet &&
+      r.blockOverBalance && n > me.balance.available + 1e-9) {
+      errs.push('You only have ' + dayWord(me.balance.available) + ' available to request.');
+    } else if (validIso(v.start) && Number(v.start.slice(0, 4)) === me.leaveYear && !me.balance.entitlementSet) {
+      errs.push('Your ' + me.leaveYear + ' entitlement has not been entered yet.');
+    }
+    return errs;
+  }
+
+  function submitRequest() {
+    var v = {
+      start: document.getElementById('fStart').value,
+      end: document.getElementById('fEnd').value,
+      days: document.getElementById('fDays').value,
+      reason: document.getElementById('fReason').value
+    };
+    var msg = document.getElementById('formMsg');
+    var errs = clientErrors(v);
+    if (errs.length) { msg.innerHTML = notice('error', '<b>Please check:</b>' + list(errs)); return; }
+    var btn = document.getElementById('fSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    msg.innerHTML = '';
+    call('api_submit', v, getToken()).then(function (res) {
+      if (!res.ok) {
+        btn.disabled = false;
+        btn.textContent = 'Send to ' + state.me.managerName + ' for approval';
+        var errors = res.errors && res.errors.length ? res.errors : [res.error || 'The request could not be sent.'];
+        msg.innerHTML = notice('error', '<b>Not sent:</b>' + list(errors));
+        return;
+      }
+      state.me = res.data;
+      return refreshManager().then(function () {
+        render();
+        var ok = 'Request ' + res.id + ' sent to ' + state.me.managerName + '. You will get an email when it is decided.';
+        document.getElementById('formMsg').innerHTML = notice('ok', esc(ok) +
+          (res.warnings && res.warnings.length ? '<br>' + esc(res.warnings.join(' ')) : ''));
+        toast('Request ' + res.id + ' sent');
+      });
+    }).catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = 'Send to ' + state.me.managerName + ' for approval';
+      msg.innerHTML = notice('error', esc(err.message));
+    });
+  }
+
+  function refreshManager() {
+    if (!state.me.isManager) return Promise.resolve();
+    return call('api_getManagerData', getToken()).then(function (m) { if (m && m.ok) state.mgr = m; });
+  }
+
+  // ---------- clicks ----------
+  document.addEventListener('click', function (ev) {
+    var t = ev.target.closest('[data-tab],[data-action]');
+    if (!t) return;
+    if (t.hasAttribute('data-tab')) { state.tab = t.getAttribute('data-tab'); render(); window.scrollTo(0, 0); return; }
+    var id = t.getAttribute('data-id');
+    var action = t.getAttribute('data-action');
+
+    if (action === 'code-signout') {
+      var tok = getToken();
+      setToken('');
+      state.tab = null; state.mgr = null; state.codeSent = false;
+      call('api_signOut', tok).then(function () { return loadAll(); }).catch(function () { return loadAll(); });
+      return;
+    }
+    if (action === 'code-restart') { state.codeSent = false; render(); return; }
+    if (action === 'ask-signout') {
+      document.getElementById('signoutWrap').innerHTML = '<span class="signout-confirm">This signs you out of Google in this browser (Gmail too). ' +
+        '<a href="' + esc(signOutUrl()) + '" target="_top">Sign out</a> &nbsp; <button class="linklike" data-action="rerender">Cancel</button></span>';
+      return;
+    }
+    if (action === 'ask-cancel') {
+      var w = document.querySelector('[data-cancel-wrap="' + cssEsc(id) + '"]');
+      w.innerHTML = '<span class="confirm">Cancel this request? <button class="btn small danger" data-action="do-cancel" data-id="' + esc(id) +
+        '">Yes, cancel</button><button class="btn small" data-action="rerender">Keep</button></span>';
+    } else if (action === 'do-cancel') {
+      busy(t);
+      call('api_cancel', id, getToken()).then(function (res) {
+        if (!res.ok) { toast(res.error, 'error'); render(); return; }
+        state.me = res.data;
+        return refreshManager().then(function () { render(); toast(id + ' cancelled'); });
+      }).catch(function (err) { toast(err.message, 'error'); render(); });
+    } else if (action === 'ask-decide') {
+      var decision = t.getAttribute('data-decision');
+      var daysIn = document.querySelector('[data-days-for="' + cssEsc(id) + '"]');
+      var wrap = document.querySelector('[data-decide-wrap="' + cssEsc(id) + '"]');
+      var label = decision === 'Approved' ? 'Approve ' + dayWord(daysIn.value) + '?' : 'Reject this request?';
+      wrap.innerHTML = '<span class="confirm">' + esc(label) + ' <button class="btn small ' + (decision === 'Approved' ? 'approve' : 'danger') +
+        '" data-action="do-decide" data-decision="' + decision + '" data-id="' + esc(id) + '">Yes, ' + (decision === 'Approved' ? 'approve' : 'reject') +
+        '</button><button class="btn small" data-action="rerender">Back</button></span>';
+    } else if (action === 'do-decide') {
+      var dec = t.getAttribute('data-decision');
+      var days = (document.querySelector('[data-days-for="' + cssEsc(id) + '"]') || {}).value;
+      var note = (document.querySelector('[data-note-for="' + cssEsc(id) + '"]') || {}).value || '';
+      busy(t);
+      call('api_decide', id, dec, dec === 'Approved' ? days : '', note, getToken()).then(function (res) {
+        if (!res.ok) { toast(res.error, 'error'); render(); return; }
+        state.mgr = res.manager;
+        state.me = res.data;
+        render();
+        toast(id + (dec === 'Approved' ? ' approved' : ' rejected') + ' - ' + res.request.name + ' has been emailed');
+      }).catch(function (err) { toast(err.message, 'error'); render(); });
+    } else if (action === 'ask-mcancel') {
+      var mw = document.querySelector('[data-mcancel-wrap="' + cssEsc(id) + '"]');
+      mw.innerHTML = '<span class="confirm">Cancel and give the days back? <button class="btn small danger" data-action="do-mcancel" data-id="' +
+        esc(id) + '">Yes</button><button class="btn small" data-action="rerender">No</button></span>';
+    } else if (action === 'do-mcancel') {
+      busy(t);
+      call('api_managerCancel', id, '', getToken()).then(function (res) {
+        if (!res.ok) { toast(res.error, 'error'); render(); return; }
+        state.mgr = res.manager;
+        state.me = res.data;
+        render();
+        toast(id + ' cancelled - ' + res.request.name + ' has been emailed');
+      }).catch(function (err) { toast(err.message, 'error'); render(); });
+    } else if (action === 'rerender') {
+      render();
+    }
+  });
+
+  document.addEventListener('change', function (ev) {
+    if (ev.target.id === 'fltStatus') { state.filter.status = ev.target.value; render(); }
+    if (ev.target.id === 'fltStaff') { state.filter.staff = ev.target.value; render(); }
+  });
+
+  function busy(btn) {
+    var wrap = btn.parentNode;
+    Array.prototype.forEach.call(wrap.querySelectorAll('button'), function (b) { b.disabled = true; });
+    btn.textContent = 'Saving...';
+  }
+  function cssEsc(s) { return String(s).replace(/["\\]/g, '\\$&'); }
+
+  start();
+})();
+</script>
+</body>
+</html>
